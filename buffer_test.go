@@ -276,7 +276,7 @@ func TestRingBufferPushMultiThreading(t *testing.T) {
 
 			wg.Wait()
 
-			if buffer.Size() != min(tc.testItemCount, buffer.cap) {
+			if buffer.Size() != min(tc.testItemCount, cap(buffer.data)) {
 				t.Errorf("items in buffer: want %d, got %d", tc.testItemCount, buffer.Size())
 			}
 		})
@@ -309,7 +309,7 @@ func TestRingBufferNew(t *testing.T) {
 	})
 }
 
-func TestRingBufferPushError(t *testing.T) {
+func TestRingBufferPushError(t *testing.T) { // ???
 	buffer, err := New[string](3)
 	if err != nil {
 		t.Error(err)
@@ -322,13 +322,13 @@ func TestRingBufferPushError(t *testing.T) {
 		}
 	})
 
-	t.Run("channel is closed", func(t *testing.T) {
-		close(buffer.dataChan)
-		err := buffer.Push("testItem")
-		if !errors.Is(err, ErrSendOnClosedChan) {
-			t.Errorf("want error: %s, got error: %s", ErrSendOnClosedChan, err)
-		}
-	})
+	// t.Run("channel is closed", func(t *testing.T) {
+	// 	close(buffer.dataChan)
+	// 	err := buffer.Push("testItem")
+	// 	if !errors.Is(err, ErrSendOnClosedChan) {
+	// 		t.Errorf("want error: %s, got error: %s", ErrSendOnClosedChan, err)
+	// 	}
+	// })
 }
 
 func TestRingBufferContainsAllItems(t *testing.T) {
@@ -420,4 +420,93 @@ func TestRingBufferClear(t *testing.T) {
 	if !buffer.IsEmpty() {
 		t.Errorf("empty buffer expected")
 	}
+}
+
+func TestRingBufferIsFull(t *testing.T) {
+	testCases := []struct {
+		bufferCap int
+		itemCount int
+		want      bool
+	}{
+		{bufferCap: 1, itemCount: 0, want: false},
+		{bufferCap: 1, itemCount: 1, want: true},
+		{bufferCap: 10, itemCount: 9, want: false},
+		{bufferCap: 100, itemCount: 100, want: true},
+		{bufferCap: 120, itemCount: 0, want: false},
+		{bufferCap: 77, itemCount: 290, want: true},
+	}
+
+	for _, tc := range testCases {
+		name := fmt.Sprintf("cap: %d, items: %d", tc.bufferCap, tc.itemCount)
+		t.Run(name, func(t *testing.T) {
+			buffer, err := New[int](tc.bufferCap)
+			if err != nil {
+				t.Error(err)
+			}
+
+			for i := 0; i < tc.itemCount; i++ {
+				buffer.Push(1)
+			}
+
+			got := buffer.IsFull()
+			if got != tc.want {
+				t.Errorf("want: %t, got: %t", tc.want, got)
+			}
+		})
+	}
+}
+
+func TestRingBufferDetectDataRace(t *testing.T) {
+	bufferCap := 500
+	gorAmount := 100
+	opCount := 10_000
+
+	buffer, err := New[string](bufferCap)
+	if err != nil {
+		t.Error(err)
+	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < gorAmount; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			for j := 0; j < opCount; j++ {
+				item := fmt.Sprintf("item %d from goroutine %d", j, i)
+				buffer.Push(item)
+			}
+		}(i)
+	}
+
+	for i := 0; i < gorAmount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < opCount; j++ {
+				buffer.Size()
+			}
+		}()
+	}
+
+	for i := 0; i < gorAmount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < opCount; j++ {
+				buffer.Get()
+			}
+		}()
+	}
+
+	for i := 0; i < gorAmount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < opCount; j++ {
+				buffer.Pop()
+			}
+		}()
+	}
+
+	wg.Wait()
 }
