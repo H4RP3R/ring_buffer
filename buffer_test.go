@@ -309,28 +309,6 @@ func TestRingBufferNew(t *testing.T) {
 	})
 }
 
-func TestRingBufferPushError(t *testing.T) { // ???
-	buffer, err := New[string](3)
-	if err != nil {
-		t.Error(err)
-	}
-
-	t.Run("channel is opened", func(t *testing.T) {
-		err := buffer.Push("testItem")
-		if err != nil {
-			t.Error("didn't expect an error:", err)
-		}
-	})
-
-	// t.Run("channel is closed", func(t *testing.T) {
-	// 	close(buffer.dataChan)
-	// 	err := buffer.Push("testItem")
-	// 	if !errors.Is(err, ErrSendOnClosedChan) {
-	// 		t.Errorf("want error: %s, got error: %s", ErrSendOnClosedChan, err)
-	// 	}
-	// })
-}
-
 func TestRingBufferContainsAllItems(t *testing.T) {
 	gorAmount := 99
 	itemCount := 12345
@@ -352,10 +330,7 @@ func TestRingBufferContainsAllItems(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 			for item := range itemChan {
-				err := buffer.Push(item)
-				if err != nil {
-					t.Error(err)
-				}
+				buffer.Push(item)
 			}
 		}(i)
 	}

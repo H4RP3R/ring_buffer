@@ -22,7 +22,7 @@ type ringBuffer[T any] struct {
 
 // Push adds an element to the buffer. If the buffer is full, overwrites the
 // oldest element. If the element could not be placed, an error is returned.
-func (rb *ringBuffer[T]) Push(item T) (err error) {
+func (rb *ringBuffer[T]) Push(item T) {
 	rb.mu.Lock()
 	defer rb.mu.Unlock()
 	rb.data[rb.writerIdx] = item
@@ -33,7 +33,6 @@ func (rb *ringBuffer[T]) Push(item T) (err error) {
 	if round := rb.shiftIdx(&rb.writerIdx); round {
 		rb.wrapped = true
 	}
-	return err
 }
 
 // Pop removes and returns an element from the beginning of the buffer.
