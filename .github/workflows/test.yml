@@ -16,3 +16,6 @@ jobs:
 
     - name: Run tests
       run: go test ./... -v -race
+
+    - name: Run benchmarks
+      run: go test -bench=. -benchmem -benchtime=10s ./...
