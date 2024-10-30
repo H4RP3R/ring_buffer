@@ -483,5 +483,25 @@ func TestRingBufferDetectDataRace(t *testing.T) {
 		}()
 	}
 
+	for i := 0; i < gorAmount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < opCount; j++ {
+				buffer.IsEmpty()
+			}
+		}()
+	}
+
+	for i := 0; i < gorAmount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < opCount; j++ {
+				buffer.IsFull()
+			}
+		}()
+	}
+
 	wg.Wait()
 }
