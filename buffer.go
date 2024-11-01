@@ -5,6 +5,16 @@ import (
 	"sync"
 )
 
+type RingBuffer[T any] interface {
+	Push(item T)
+	Pop() (T, bool)
+	IsEmpty() bool
+	IsFull() bool
+	Size() int
+	Get() (T, bool)
+	Clear()
+}
+
 var ErrInvalidBuffCap = fmt.Errorf("buffer capacity is less than 1")
 
 // ringBuffer is a thread-safe ring buffer implementation.
