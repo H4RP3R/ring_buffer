@@ -395,6 +395,103 @@ func TestRingBufferClear(t *testing.T) {
 	if !buffer.IsEmpty() {
 		t.Errorf("empty buffer expected")
 	}
+
+	if buffer.Size() != 0 {
+		t.Errorf("buffer size: want 0, got %d", buffer.Size())
+	}
+
+	got, ok := buffer.Get()
+	if got != 0 {
+		t.Errorf("expected empty buffer, got %d", got)
+	}
+	if ok != false {
+		t.Errorf("expected ok: false, got ok: %t", ok)
+	}
+
+	got, ok = buffer.Pop()
+	if got != 0 {
+		t.Errorf("expected empty buffer, got %d", got)
+	}
+	if ok != false {
+		t.Errorf("expected ok: false, got ok: %t", ok)
+	}
+}
+
+func TestRingBufferDeepClear(t *testing.T) {
+	itemCount := 100
+	buffer, err := New[int](itemCount)
+	if err != nil {
+		t.Error(err)
+	}
+
+	for i := 0; i < itemCount; i++ {
+		buffer.Push(42)
+	}
+	if buffer.IsEmpty() {
+		t.Errorf("non-empty buffer expected")
+	}
+
+	buffer.DeepClear()
+	if !buffer.IsEmpty() {
+		t.Errorf("empty buffer expected")
+	}
+
+	if buffer.Size() != 0 {
+		t.Errorf("buffer size: want 0, got %d", buffer.Size())
+	}
+
+	got, ok := buffer.Get()
+	if got != 0 {
+		t.Errorf("expected empty buffer, got %d", got)
+	}
+	if ok != false {
+		t.Errorf("expected ok: false, got ok: %t", ok)
+	}
+
+	got, ok = buffer.Pop()
+	if got != 0 {
+		t.Errorf("expected empty buffer, got %d", got)
+	}
+	if ok != false {
+		t.Errorf("expected ok: false, got ok: %t", ok)
+	}
+}
+
+func TestRingBufferReuseAfterClear(t *testing.T) {
+	itemCount := 50
+	buffer, err := New[int](itemCount)
+	if err != nil {
+		t.Error(err)
+	}
+	// Initially fill the buffer, just to clear it then.
+	for i := 0; i < itemCount; i++ {
+		buffer.Push(42)
+	}
+	buffer.Clear()
+
+	testNumbers := randomNumbers(itemCount, -100, 100)
+	for _, num := range testNumbers {
+		buffer.Push(num)
+	}
+	if !buffer.IsFull() {
+		t.Errorf("expected full buffer")
+	}
+	gotSize := buffer.Size()
+	if gotSize != len(testNumbers) {
+		t.Errorf("buffer size: got %d, want %d", gotSize, len(testNumbers))
+	}
+	if !reflect.DeepEqual(buffer.data, testNumbers) {
+		t.Errorf("buffer data:\n got %v, \nwant %v", buffer.data, testNumbers)
+	}
+
+	idx := 0
+	for !buffer.IsEmpty() {
+		num, _ := buffer.Pop()
+		if num != testNumbers[idx] {
+			t.Errorf("Pop() item: got %d, want %d", num, testNumbers[idx])
+		}
+		idx++
+	}
 }
 
 func TestRingBufferIsFull(t *testing.T) {
@@ -504,4 +601,16 @@ func TestRingBufferDetectDataRace(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+// randomNumbers returns a slice of size random integers
+// between min and max (exclusive).
+func randomNumbers(size, min, max int) []int {
+	numbers := make([]int, size)
+
+	for i := 0; i < size; i++ {
+		numbers[i] = rand.Intn(max-min) + min
+	}
+
+	return numbers
 }
