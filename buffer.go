@@ -94,8 +94,26 @@ func (rb *ringBuffer[T]) Get() (T, bool) {
 	return rb.data[rb.readerIdx], true
 }
 
-// Clear clears the buffer, removing all elements.
+// Clear resets the buffer to its initial state, removing all elements.
+// This operation does not modify the underlying data and is a lightweight way
+// to reuse the buffer.
 func (rb *ringBuffer[T]) Clear() {
+	if rb.IsEmpty() {
+		return
+	}
+	rb.mu.Lock()
+	rb.writerIdx = 0
+	rb.readerIdx = 0
+	rb.lastWriterIdx = 0
+	rb.wrapped = false
+	rb.size = 0
+	rb.mu.Unlock()
+}
+
+// DeepClear erases all data in the buffer by writing zero values to all buffer
+// cells. This operation has a time complexity of O(n), where n is the buffer
+// size. Use this method when security or data sensitivity is a concern.
+func (rb *ringBuffer[T]) DeepClear() {
 	if rb.IsEmpty() {
 		return
 	}
