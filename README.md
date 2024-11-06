@@ -56,8 +56,11 @@ if buffer.IsFull() {
 // Check the current size of the buffer
 fmt.Println("Buffer size:", buffer.Size())
 
-// Clear the buffer
+// Reset the buffer
 buffer.Clear()
+
+// Clear all elements from the buffer, writing zero values to all buffer cells
+buffer.DeepClear()
 ```
 
 ### Getting Elements Without Removing
@@ -80,7 +83,8 @@ if !ok {
 - `Full() bool`: Checks if the buffer is full.
 - `Size() int`: Returns the current size of the buffer.
 - `Get() (item T, ok bool)`: Returns an element from the beginning of the buffer without removing it.
-- `Clear()`: Clears the buffer, removing all elements.
+- `Clear()`: Resets the buffer to the initial state.
+- `DeepClear()`: Clears the buffer, removing all elements by writing zero values to all buffer cells.
 
 ### New Function
 
