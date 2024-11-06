@@ -1,3 +1,6 @@
+[![Tests](https://github.com/H4RP3R/ring_buffer/actions/workflows/test.yml/badge.svg)](https://github.com/your-username/your-repo-name/actions/workflows/test.yml)
+
+
 # Ring Buffer
 
 This repository contains a thread-safe circular buffer implementation in Go. The circular buffer, also known as a ring buffer, is a data structure that uses a single, fixed-size buffer as if it were connected end-to-end. This structure lends itself easily to buffering data streams.
