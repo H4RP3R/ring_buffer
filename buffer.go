@@ -13,6 +13,7 @@ type RingBuffer[T any] interface {
 	Size() int
 	Get() (T, bool)
 	Clear()
+	DeepClear()
 }
 
 var ErrInvalidBuffCap = fmt.Errorf("buffer capacity is less than 1")
