@@ -10,6 +10,18 @@ import (
 	"testing"
 )
 
+func TestRingBufferImplementsInterface(t *testing.T) {
+	buffer, _ := New[string](1)
+	checkInterfaceImplementation := func(rb interface{}) bool {
+		_, ok := rb.(RingBuffer[string])
+		return ok
+	}
+	if !checkInterfaceImplementation(buffer) {
+		t.Errorf("ringBuffer does not implement RingBuffer interface")
+	}
+
+}
+
 func TestRingBufferPushInt(t *testing.T) {
 	testCases := []struct {
 		bufCapacity int
