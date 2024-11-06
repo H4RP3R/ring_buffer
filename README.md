@@ -14,7 +14,7 @@ This repository contains a thread-safe circular buffer implementation in Go. The
 ```go
 import ringBuf "github.com/H4RP3R/ring_buffer"
 
-// Create circular buffer with capacity of 10 integers
+// Create ring buffer with capacity of 10 integers
 buffer, err := ringBuf.New[int](10)
 if err != nil {
     panic(err)
@@ -88,7 +88,7 @@ if !ok {
 
 ### New Function
 
-- `New[T any](capacity int) (cb *cBuffer[T], err error)`: Creates a new circular buffer with the given capacity.
+- `New[T any](capacity int) (rb *ringBuffer[T], err error)`: Creates a new ring buffer with the given capacity.
 
 ## Contributing
 
