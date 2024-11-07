@@ -7,6 +7,7 @@ import (
 
 type RingBuffer[T any] interface {
 	Push(item T)
+	TryPush(item T) error
 	Pop() (T, bool)
 	IsEmpty() bool
 	IsFull() bool
@@ -17,6 +18,7 @@ type RingBuffer[T any] interface {
 }
 
 var ErrInvalidBuffCap = fmt.Errorf("buffer capacity is less than 1")
+var ErrBufferIsFull = fmt.Errorf("buffer is full")
 
 // ringBuffer is a thread-safe ring buffer implementation.
 type ringBuffer[T any] struct {
@@ -44,6 +46,18 @@ func (rb *ringBuffer[T]) Push(item T) {
 	if round := rb.shiftIdx(&rb.writerIdx); round {
 		rb.wrapped = true
 	}
+}
+
+// TryPush attempts to add an element to the ring buffer. If the buffer is
+// full, it returns ErrBufferFull without adding the element. If there is free
+// space, it adds the element and returns nil.
+func (rb *ringBuffer[T]) TryPush(item T) (err error) {
+	if rb.IsFull() {
+		return ErrBufferIsFull
+	}
+
+	rb.Push(item)
+	return nil
 }
 
 // Pop removes and returns an element from the beginning of the buffer.
