@@ -98,6 +98,65 @@ func TestRingBufferPushInt(t *testing.T) {
 	}
 }
 
+func TestRingBufferTryPushInt(t *testing.T) {
+	testCases := []struct {
+		name        string
+		bufCapacity int
+		testItems   []int
+	}{
+		{name: "1 item", bufCapacity: 1, testItems: []int{1}},
+		{name: "10 items", bufCapacity: 10, testItems: []int{2, 4, 13, 13, 30, 45, 12, 7, 35, 19}},
+		{name: "random items", bufCapacity: 1024, testItems: randomNumbers(1024, 0, 1000)},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			lastItem := 42
+			buffer, err := New[int](tc.bufCapacity)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Fill buffer to capacity
+			for _, item := range tc.testItems {
+				err := buffer.TryPush(item)
+				if err != nil {
+					t.Errorf("didn't expect an error: %v", err)
+				}
+			}
+
+			// TryPush to full buffer
+			err = buffer.TryPush(lastItem)
+			if !errors.Is(err, ErrBufferIsFull) {
+				t.Errorf("expected err: %v, got err: %v", ErrBufferIsFull, err)
+			}
+
+			// Match buffer content
+			expectedItems := tc.testItems
+			if len(expectedItems) > tc.bufCapacity {
+				expectedItems = expectedItems[len(expectedItems)-tc.bufCapacity:]
+			}
+			if !reflect.DeepEqual(buffer.data[:buffer.size], expectedItems) {
+				t.Errorf("buffer data does not match test items")
+			}
+
+			// Pop and push new item
+			buffer.Pop()
+			err = buffer.TryPush(lastItem)
+			if err != nil {
+				t.Errorf("didn't expect an error: %v", err)
+			}
+
+			// Calculate the expected index for the last item
+			expectedIndex := (buffer.writerIdx - 1 + cap(buffer.data)) % cap(buffer.data)
+			// Verify last item is correctly placed
+			if buffer.data[expectedIndex] != lastItem {
+				t.Errorf("last item: want %d, got %d", lastItem, buffer.data[expectedIndex])
+			}
+		})
+	}
+}
+
 func TestRingBufferPopString(t *testing.T) {
 	testCases := []struct {
 		bufCapacity int
