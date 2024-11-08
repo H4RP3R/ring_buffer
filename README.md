@@ -1,6 +1,5 @@
 [![Tests](https://github.com/H4RP3R/ring_buffer/actions/workflows/test.yml/badge.svg)](https://github.com/your-username/your-repo-name/actions/workflows/test.yml)
 
-
 # Ring Buffer
 
 This repository contains a thread-safe circular buffer implementation in Go. The circular buffer, also known as a ring buffer, is a data structure that uses a single, fixed-size buffer as if it were connected end-to-end. This structure lends itself easily to buffering data streams.
@@ -29,6 +28,12 @@ if err != nil {
 ```go
 // Push an element into the buffer
 buffer.Push(42)
+
+// Attempt to add an element. If the buffer is full, an error will be returned
+err := buffer.TryPush(23)
+if err != nil {
+    fmt.Println(err)
+}
 ```
 
 ### Removing Elements
@@ -81,6 +86,7 @@ if !ok {
 ## API Reference
 
 - `Push(item T)`: Adds an element to the buffer.
+- `TryPush(item T) (err error)`: Attempts to add an element to the buffer. If the buffer is full, an error will be returned.
 - `Pop() (item T, ok bool)`: Removes and returns an element from the beginning of the buffer.
 - `IsEmpty() bool`: Checks if the buffer is empty.
 - `Full() bool`: Checks if the buffer is full.
