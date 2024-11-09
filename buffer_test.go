@@ -19,7 +19,6 @@ func TestRingBufferImplementsInterface(t *testing.T) {
 	if !checkInterfaceImplementation(buffer) {
 		t.Errorf("ringBuffer does not implement RingBuffer interface")
 	}
-
 }
 
 func TestRingBufferPushInt(t *testing.T) {
@@ -80,7 +79,7 @@ func TestRingBufferPushInt(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			buffer, err := New[int](tc.bufCapacity)
 			if err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
 			for _, item := range tc.testItems {
 				buffer.Push(item)
@@ -212,7 +211,7 @@ func TestRingBufferPopString(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			buffer, err := New[string](tc.bufCapacity)
 			if err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
 			for _, item := range tc.testItems {
 				buffer.Push(item)
@@ -236,7 +235,7 @@ func TestRingBufferPopString(t *testing.T) {
 func TestRingBufferPopFromEmptyBuffer(t *testing.T) {
 	buffer, err := New[int](2)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	want := 0
@@ -269,7 +268,7 @@ func TestRingBufferIsEmpty(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			buffer, err := New[int](tc.bufCapacity)
 			if err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
 			for i := 0; i < tc.itemsAmount; i++ {
 				buffer.Push(42)
@@ -326,7 +325,7 @@ func TestRingBufferPushMultiThreading(t *testing.T) {
 			testItems := generateTestItems(tc.testItemCount)
 			buffer, err := New[int](tc.bufCapacity)
 			if err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
 
 			itemChan := make(chan int, tc.gorAmount)
@@ -385,7 +384,7 @@ func TestRingBufferContainsAllItems(t *testing.T) {
 	itemCount := 12345
 	buffer, err := New[int](itemCount)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	itemChan := make(chan int)
@@ -421,7 +420,7 @@ func TestRingBufferContainsAllItems(t *testing.T) {
 func TestRingBufferGetString(t *testing.T) {
 	buffer, err := New[string](3)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	t.Run("empty buffer", func(t *testing.T) {
@@ -452,7 +451,7 @@ func TestRingBufferClear(t *testing.T) {
 	itemCount := 100
 	buffer, err := New[int](itemCount)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	for i := 0; i < itemCount; i++ {
@@ -492,7 +491,7 @@ func TestRingBufferDeepClear(t *testing.T) {
 	itemCount := 100
 	buffer, err := New[int](itemCount)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	for i := 0; i < itemCount; i++ {
@@ -532,7 +531,7 @@ func TestRingBufferReuseAfterClear(t *testing.T) {
 	itemCount := 50
 	buffer, err := New[int](itemCount)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	// Initially fill the buffer, just to clear it then.
 	for i := 0; i < itemCount; i++ {
@@ -584,7 +583,7 @@ func TestRingBufferIsFull(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			buffer, err := New[int](tc.bufferCap)
 			if err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
 
 			for i := 0; i < tc.itemCount; i++ {
@@ -606,7 +605,7 @@ func TestRingBufferDetectDataRace(t *testing.T) {
 
 	buffer, err := New[string](bufferCap)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	var wg sync.WaitGroup
