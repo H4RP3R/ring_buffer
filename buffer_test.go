@@ -599,6 +599,29 @@ func TestRingBufferIsFull(t *testing.T) {
 	}
 }
 
+func TestRingBufferCapacity(t *testing.T) {
+	testCases := []struct {
+		name      string
+		bufferCap int
+	}{
+		{name: "fixed capacity", bufferCap: 4},
+		{name: "random capacity", bufferCap: rand.Intn(1000) + 1},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			buffer, err := New[int](tc.bufferCap)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if buffer.Capacity() != tc.bufferCap {
+				t.Errorf("buffer capacity: want %d, got %d", tc.bufferCap, buffer.Capacity())
+			}
+		})
+	}
+}
+
 func TestRingBufferDetectDataRace(t *testing.T) {
 	bufferCap := 500
 	gorAmount := 100
@@ -627,6 +650,16 @@ func TestRingBufferDetectDataRace(t *testing.T) {
 			defer wg.Done()
 			for j := 0; j < opCount; j++ {
 				buffer.Size()
+			}
+		}()
+	}
+
+	for i := 0; i < gorAmount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < opCount; j++ {
+				buffer.Capacity()
 			}
 		}()
 	}
