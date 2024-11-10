@@ -12,6 +12,7 @@ type RingBuffer[T any] interface {
 	IsEmpty() bool
 	IsFull() bool
 	Size() int
+	Capacity() int
 	Get() (T, bool)
 	Clear()
 	DeepClear()
@@ -95,6 +96,13 @@ func (rb *ringBuffer[T]) Size() int {
 	rb.mu.RLock()
 	defer rb.mu.RUnlock()
 	return rb.size
+}
+
+// Capacity returns the buffer's capacity, which is the maximum number of
+// elements that the buffer can store.
+// No mutex is needed here because rb.cap is not modified concurrently.
+func (rb *ringBuffer[T]) Capacity() int {
+	return rb.cap
 }
 
 // Get returns an element from from the beginning of the buffer,
