@@ -598,6 +598,40 @@ func TestRingBufferIsFull(t *testing.T) {
 	}
 }
 
+func TestRingBufferSize(t *testing.T) {
+	testCases := []struct {
+		name      string
+		bufferCap int
+		itemCount int
+		wantSize  int
+	}{
+		{bufferCap: 1, itemCount: 0, wantSize: 0},
+		{bufferCap: 1, itemCount: 1, wantSize: 1},
+		{bufferCap: 10, itemCount: 9, wantSize: 9},
+		{bufferCap: 100, itemCount: 100, wantSize: 100},
+		{bufferCap: 120, itemCount: 0, wantSize: 0},
+		{bufferCap: 77, itemCount: 290, wantSize: 77},
+		{bufferCap: 33, itemCount: 99, wantSize: 33},
+	}
+
+	for _, tc := range testCases {
+		name := fmt.Sprintf("cap: %d, items: %d", tc.bufferCap, tc.itemCount)
+		t.Run(name, func(t *testing.T) {
+			buffer, err := New[bool](tc.bufferCap)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for i := 0; i < tc.itemCount; i++ {
+				buffer.Push(true)
+			}
+
+			if buffer.Size() != tc.wantSize {
+				t.Errorf("size: want %d, got %d", tc.wantSize, buffer.Size())
+			}
+		})
+	}
+}
+
 func TestRingBufferCapacity(t *testing.T) {
 	testCases := []struct {
 		name      string
