@@ -91,6 +91,7 @@ if !ok {
 - `IsEmpty() bool`: Checks if the buffer is empty.
 - `Full() bool`: Checks if the buffer is full.
 - `Size() int`: Returns the current size of the buffer.
+- `Capacity() int`: Returns the buffer's capacity.
 - `Get() (item T, ok bool)`: Returns an element from the beginning of the buffer without removing it.
 - `Clear()`: Resets the buffer to the initial state.
 - `DeepClear()`: Clears the buffer, removing all elements by writing zero values to all buffer cells.
