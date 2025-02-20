@@ -53,11 +53,15 @@ func (rb *ringBuffer[T]) Push(item T) {
 // full, it returns ErrBufferFull without adding the element. If there is free
 // space, it adds the element and returns nil.
 func (rb *ringBuffer[T]) TryPush(item T) (err error) {
-	if rb.IsFull() {
+	rb.mu.Lock()
+	defer rb.mu.Unlock()
+	if rb.size == rb.cap {
 		return ErrBufferIsFull
 	}
 
-	rb.Push(item)
+	rb.data[rb.writerIdx] = item
+	rb.size++
+	rb.shiftIdx(&rb.writerIdx)
 	return nil
 }
 
