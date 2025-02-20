@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"sort"
 	"sync"
+	"sync/atomic"
 	"testing"
 )
 
@@ -679,6 +680,17 @@ func TestRingBufferDetectDataRace(t *testing.T) {
 
 	for i := 0; i < gorAmount; i++ {
 		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			for j := 0; j < opCount; j++ {
+				item := fmt.Sprintf("item %d from goroutine %d", j, i)
+				buffer.TryPush(item)
+			}
+		}(i)
+	}
+
+	for i := 0; i < gorAmount; i++ {
+		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for j := 0; j < opCount; j++ {
@@ -738,6 +750,79 @@ func TestRingBufferDetectDataRace(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+func TestTryPushAtomicity(t *testing.T) {
+	const (
+		capacity   = 2
+		goroutines = 50
+		operations = 10000
+	)
+
+	rb, err := New[int](capacity)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		wg           sync.WaitGroup
+		pushedValues sync.Map
+		overflows    int32
+	)
+
+	// Producer goroutines
+	for i := 0; i < goroutines; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			for j := 0; j < operations; j++ {
+				val := id*operations + j
+				if err := rb.TryPush(val); err == nil {
+					pushedValues.Store(val, true)
+				} else {
+					atomic.AddInt32(&overflows, 1)
+				}
+			}
+		}(i)
+	}
+
+	// Consumer goroutine to drain the buffer
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			if _, ok := rb.Pop(); !ok {
+				if rb.IsEmpty() {
+					return
+				}
+			}
+		}
+	}()
+
+	wg.Wait()
+
+	// Verify buffer state
+	finalSize := rb.Size()
+	if finalSize > capacity {
+		t.Fatalf("Buffer overflow detected: size=%d, capacity=%d", finalSize, capacity)
+	}
+
+	// Verify all stored values were unique
+	seen := make(map[int]bool)
+	pushedValues.Range(func(key, value interface{}) bool {
+		val := key.(int)
+		if seen[val] {
+			t.Errorf("Duplicate value detected: %d", val)
+		}
+		seen[val] = true
+		return true
+	})
+
+	// Verify theoretical maximum
+	maxPossible := capacity + int(atomic.LoadInt32(&overflows))
+	if len(seen) > maxPossible {
+		t.Errorf("Stored values exceed theoretical maximum: %d > %d", len(seen), maxPossible)
+	}
 }
 
 // randomNumbers returns a slice of size random integers
